@@ -1,7 +1,9 @@
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
-from src.models import TrendCard, TrendCardInput
+from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
+from google.genai.types import HarmBlockThreshold, HarmCategory
 
+from src.models import TrendCard, TrendCardInput
 from src.utils.configuration import load_config
 
 
@@ -38,16 +40,37 @@ class TrendCardAgent:
         self.prompt_template = self.config["generator_prompt"]
 
         # create the agent
-        self.agent = Agent(
-            model=f'anthropic:{self.config["model"]}',
-            model_settings=ModelSettings(
+        # the Google API is different than those for OpenAI, Anthropic, etc., so need google-specific code
+        settings = None
+        model = None
+        if self.config["model"].startswith("gemini"):
+            settings = GoogleModelSettings(
+                temperature=self.config.get("temperature", 0.5),
+                max_tokens=self.config.get("max_tokens", 2048),
+                google_thinking_config={'thinking_budget': self.config.get("thinking_budget", 2048)},
+                google_safety_settings=[
+                    {
+                        'category': self.config.get("safety_settings_cateogry", HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT),
+                        'threshold': self.config.get("safety_settings_threshold", HarmBlockThreshold.BLOCK_LOW_AND_ABOVE),
+                    }
+                ]
+            )
+            model = GoogleModel(self.config["model"])
+        else:
+            settings=ModelSettings(
                 max_tokens=self.config.get("max_tokens", 2048),
                 temperature=self.config.get("temperature", 0.5)
-            ),
+            )
+            model=self.config["model"]
+
+        self.agent = Agent(
+            model=model,
+            model_settings=settings,
             output_type=TrendCard,
             system_prompt=self.system_prompt,
             retries=self.config.get("generator_retries", 3)
         )
+
 
     async def generate_trend_card(self, inputs: TrendCardInput) -> TrendCard:
         """
