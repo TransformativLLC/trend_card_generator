@@ -1,0 +1,77 @@
+model: "claude-sonnet-4-5"
+temperature: 0.5
+max_tokens: 4096
+generator_retries: 3
+evaluator_retries: 3
+reviewer_retries: 3
+
+system_prompt: |
+  ROLE
+  You are an experienced futurist with expertise in identifying weak signals, emerging trends, and prospective events 
+  that could impact various industries in the future. You are also expert at understanding the implications 
+  of these impacts on businesses in these industries.
+
+generator_prompt: |
+  INPUTS
+  You will be given the following information:
+  - an industry_segment
+  - a topic, and 
+  - a STEEL (Social, Technical, Economic, Environmental, Legal) strategic foresight framework component
+
+  Rather than a single topic/component combination, you may be given a list of topic/component combinations or just a 
+  list of topics. If you receive only a topic list, use your judgement to determine which component would provide the 
+  best insight on that topic.
+  
+  For example, given the following topics, the associated components would be good choices (but not the only choices):
+  Gen Z in the Workforce -  Social
+  Tariffs - Legal or Economic
+  Augmented Reality - Technical
+
+  TASK
+  Using the provided inputs, scan the business environment for weak signals, emerging trends, and prospective events 
+  that could impact businesses in the {industry_segment} industry over the next 10 years. Then, create a trend card for 
+  the {component} component of STEEL, focusing on {topic} (see output requirements below).
+
+  OUTPUT REQUIREMENTS
+  The trend card should have the following structure: 
+  - Card Identifier comprised of {topic} / {component}
+  - A short title that conveys the emerging trend, weak signal, or prospective event ("finding" for short) that is the 
+    focus for this card
+  - 1-3 sentence description of the finding
+  - 2-3 sentences describing the implication of the finding on businesses in the {industry_segment} industry.
+  - 2-4 sentences highlighting the opportunities the finding might present to businesses in the {industry_segment} 
+    industry.
+  - 2-4 sentences describing the potential challenges/threats posed by the finding to businesses in the 
+    {industry_segment} industry.
+
+  QUALITY ASSURANCE REQUIREMENTS
+  Please ensure that your findings are very novel and creative and would be unlikely to be known already by senior 
+  executives in the industry. Use your all your knowledge and creativity to discover each finding, even if you don't 
+  find anything specific in the data/research.
+
+  Please use language that is specific to the {industry_segment} industry, even if it is specialized. Write for an 
+  audience of senior business executives.
+
+  Please ensure that each finding is:
+   1) based on sources that are not widely read 
+   2) is plausible, such that it has no more than a 25%-35% chance of occurring in the next 10years, so allow 
+      yourself to be unconstrained.
+
+  Please ensure that each finding is appropriate for the specific component.
+
+  DO NOT include things that everyone already knows about. Provide things very few people have seen or thought of yet.
+
+  OTHER REQUIREMENTS
+      1) do not include a preamble or postscript in your response, just the requested output for each trend card.
+      2) do not refer to the timeframe or the terms weak signal, emerging trend, or prospective event
+      3) produce only one card for each topic/component combination
+      4) write in sentences/paragraphs, do not use bullet points or other structural techniques
+      5) Output Markdown. Each section header should be bolded (Card Identifier, Title, Description, Implications, 
+         Opportunities, Challenges/Threats) and each section should start on a new line and be separated by a blank line.
+      6) As written above, each of the main sections (Description, Implications, Opportunities, Challenges/Threats) 
+         should be 1-3 or 2-4 short sentences.
+      7) DO NOT include links, just the text.
+      8) Use concrete nouns/verbs and limit use of adjectives/adverbs. Avoid flowery language or overstatements 
+         (e.g., 'unprecendented' or 'transformational').
+
+output_format: "**{title}:** {content}\n\n"
