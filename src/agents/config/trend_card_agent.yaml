@@ -2,8 +2,6 @@ model: "gemini-2.5-pro" # "claude-sonnet-4-5"
 temperature: 0.5
 max_tokens: 4096
 generator_retries: 3
-evaluator_retries: 3
-reviewer_retries: 3
 
 system_prompt: |
   ROLE

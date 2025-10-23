@@ -1,5 +1,9 @@
+import re
+from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import get_type_hints
+
+from src.utils.fileio import append_to_filename
 
 
 class TrendCard(BaseModel):
@@ -43,19 +47,20 @@ class TrendCard(BaseModel):
 
     def to_markdown(self, output_format: str = "**{title}:** {content}\n\n") -> str:
         """
-        Converts a TrendCard instance into a markdown string.
+        Converts the attributes of a TrendCard instance to a Markdown formatted string.
 
-        This method iterates through the attributes of a TrendCard instance and formats
-        each attribute into a markdown-ready string using an output format specified
-        in the configuration. The formatted markdown string will contain the
-        attributes' values structured as titles and contents.
+        This method iterates through the attributes of the TrendCard instance, formatting
+        each attribute as a Markdown section with a title and content. The output format is
+        customizable by providing a specific format string.
 
         Args:
-            card (TrendCard): An instance of the TrendCard class whose attributes will
-                be converted to a markdown string.
+            output_format (str): A format string specifying how each attribute's title and
+                content should be placed in the output Markdown. Defaults to
+                "**{title}:** {content}\n\n".
 
         Returns:
-            str: A formatted markdown string representing the TrendCard's attributes.
+            str: A Markdown formatted string containing all attributes of the TrendCard
+                instance.
         """
 
         card_content_markdown = ""
@@ -66,10 +71,37 @@ class TrendCard(BaseModel):
             title = attr_name.replace('_', ' ').title()
             content = getattr(self, attr_name)
 
-            # Add formatted section to markdown
+            # Add a formatted section
             card_content_markdown += output_format.format(
                 title=title,
                 content=content,
             )
 
         return card_content_markdown.strip()
+
+
+    def save_to_file(self, file_name_suffix: str = None,
+                     extension: str = ".md", file_path: str = "../outputs") -> str:
+        """
+        """
+        # ensure the extension starts with a period
+        if not extension.startswith('.'):
+            extension = f'.{extension}'
+
+        file_name = self.card_identifier.lower()
+        file_name = re.sub(r'[^\w\s]', ' ', file_name)
+        file_name = re.sub(r'\s+', '_', file_name.strip()) + extension
+
+        if file_name_suffix:
+            file_name = append_to_filename(file_name, suffix=file_name_suffix)
+
+        path = Path(file_path)
+        path.mkdir(parents=True, exist_ok=True)
+
+        output_path = path / file_name
+
+        match extension:
+            case ".md": output_path.write_text(self.to_markdown(), encoding='utf-8')
+            case _: raise NotImplementedError(f"Extension '{extension}' not implemented.")
+
+        return file_name
