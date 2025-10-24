@@ -38,7 +38,7 @@ def get_file_list(path: str, extension: str, exclude_names_with: str = None) -> 
     if not path_obj.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {path}")
 
-    # Ensure extension starts with a dot
+    # Ensure the extension starts with a dot
     if not extension.startswith('.'):
         extension = f'.{extension}'
 
@@ -64,10 +64,6 @@ def read_file(file_path: str) -> str:
     Raises:
         FileNotFoundError: If the specified file does not exist.
         IOError: If there is an error when reading the file.
-
-    Examples:
-        >>> content = read_file('/path/to/file.md')
-        >>> print(content)
     """
     path_obj = Path(file_path)
 
@@ -107,8 +103,8 @@ def append_to_filename(file_path: str, suffix: str, separator: str = "_") -> str
     stem = path_obj.stem
     extension = path_obj.suffix
 
-    # Create new filename with appended suffix
+    # Create a new filename with appended suffix
     new_filename = f"{stem}{separator}{suffix}{extension}"
 
-    # Return the full path with new filename
+    # Return the full path with the new filename
     return str(path_obj.parent / new_filename)

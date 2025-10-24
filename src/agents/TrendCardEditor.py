@@ -9,16 +9,18 @@ from src.utils.fileio import read_file
 
 class TrendCardEditor:
     """
-    Handles the configuration, initialization, and operation of an agent used for generating trend cards.
+    Handles the editing and batch processing of trend cards, leveraging configuration-based
+    settings and asynchronous operations.
 
-    This class is designed to streamline the process of loading configurations, setting up prompt templates,
-    and utilizing a preconfigured model to produce trend card components based on input data. The generated
-    trend cards are produced asynchronously using a predefined agent and prompt system.
+    This class is designed to provide utilities for editing "trend cards," which are presumably
+    text-based artifacts processed and updated with the assistance of an asynchronous agent.
+    It allows integration with configuration files for defining agent behavior and includes
+    methods for editing individual and multiple trend cards.
 
     Attributes:
-        config (dict): The configuration dictionary loaded from the specified file.
-        system_prompt (str): Predefined system prompt used by the agent.
-        agent (Agent): Configured agent instance for generating trend cards.
+        model (str): The name of the model used by the agent to process trend cards.
+        agent (Agent): The agent instance responsible for handling asynchronous operations
+            related to trend card editing.
     """
 
     def __init__(self, config_path: str = "src/agents/config", config_file_name: str = "trend_card_editor.yaml",

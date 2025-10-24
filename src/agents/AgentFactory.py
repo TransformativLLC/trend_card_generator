@@ -30,7 +30,7 @@ class AgentFactory:
             Agent: An initialized Agent object configured as per the
             provided input configuration.
         """
-        # the Google API is different than those for OpenAI, Anthropic, etc., so need google-specific code
+        # the Google API is different from those for OpenAI, Anthropic, etc., so need google-specific code
         if config["model"].startswith("gemini"):
             safety_settings = SafetySettingDict(
                 category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,

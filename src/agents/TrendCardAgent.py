@@ -9,20 +9,22 @@ from src.utils.configuration import load_config
 
 class TrendCardAgent:
     """
-    Manages trend card generation, utilizing various model configurations and prompts,
-    while supporting batch creation and saving of trend cards. This agent is designed
-    to work with both simple and complex configurations and supports model-specific logic.
+    The TrendCardAgent class encapsulates the functionality for generating trend cards
+    based on given inputs, allowing for individual or batch processing.
+
+    This class provides utilities to initialize the agent with configuration settings,
+    generate trend cards for given input parameters, and save them to a specific directory.
+    It supports customization through configuration files or directly through parameter
+    overrides. Additionally, it can handle batch processing effectively, providing details
+    about progress when verbose mode is enabled.
 
     Attributes:
-        config (dict): Contains the configuration settings loaded from the YAML file or
-            overridden by external inputs.
-        system_prompt (str): Represents the base system prompt used by the generative model.
-        prompt_template (str): Template for generating queries dynamically based on input
-            parameters.
-        agent (Agent): Instance of a configured agent responsible for processing prompts
-            and generating outputs.
-        translation_table (dict): Translation table for converting model names into a safe
-            directory-compatible format, replacing special characters with underscores.
+        prompt_template (str): A string template used for generating prompts based
+            on user inputs.
+        model (str): The model used by the agent for generating results.
+        agent (Agent): The core agent instance responsible for executing prompts.
+        translation_table (dict): Table used for translating unsafe characters in
+            model names to directory-safe characters.
     """
 
     def __init__(self, config_path: str = "src/agents/config",  config_file_name: str = "trend_card_agent.yaml",

@@ -120,8 +120,7 @@ class TrendCard(BaseModel):
 
     def get_length(self) -> Dict[str, int]:
         """
-        Calculates the length of each attribute value of the TrendCard class in terms of the
-        number of words.
+        Calculates the number of words in the TrendCard attribute values.
 
         Iterates through the attributes of the TrendCard class, computes the total word count
         for the value of each attribute, and returns this information as a dictionary.
