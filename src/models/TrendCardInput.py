@@ -22,3 +22,8 @@ class TrendCardInput(BaseModel):
         description="Optional STEEL framework component (Social, Technical, Economic, Environmental, or Legal). "
                     "If not provided, the most relevant component will be determined by the agent."
     )
+
+    word_limit: Optional[int] = Field(
+        40,
+        description="Optional limit on the number of words for each text section."
+    )

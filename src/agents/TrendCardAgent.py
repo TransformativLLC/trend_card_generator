@@ -1,75 +1,56 @@
-from pydantic_ai import Agent
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
-from google.genai.types import HarmBlockThreshold, HarmCategory
+from typing import Dict
 
-from src.models import TrendCard, TrendCardInput
+from pydantic_ai import Agent
+
+from src.agents.AgentFactory import AgentFactory
+from src.models import TrendCard, TrendCardInput, AgentConfiguration
 from src.utils.configuration import load_config
 
 
 class TrendCardAgent:
     """
-    Handles the configuration, initialization, and operation of an agent used for generating trend cards.
-
-    This class is designed to streamline the process of loading configurations, setting up prompt templates,
-    and utilizing a preconfigured model to produce trend card components based on input data. The generated
-    trend cards are produced asynchronously using a predefined agent and prompt system.
+    Manages trend card generation, utilizing various model configurations and prompts,
+    while supporting batch creation and saving of trend cards. This agent is designed
+    to work with both simple and complex configurations and supports model-specific logic.
 
     Attributes:
-        config (dict): The configuration dictionary loaded from the specified file.
-        system_prompt (str): Predefined system prompt used by the agent.
-        prompt_template (str): Template for generating prompts specific to trend cards.
-        agent (Agent): Configured agent instance for generating trend cards.
+        config (dict): Contains the configuration settings loaded from the YAML file or
+            overridden by external inputs.
+        system_prompt (str): Represents the base system prompt used by the generative model.
+        prompt_template (str): Template for generating queries dynamically based on input
+            parameters.
+        agent (Agent): Instance of a configured agent responsible for processing prompts
+            and generating outputs.
+        translation_table (dict): Translation table for converting model names into a safe
+            directory-compatible format, replacing special characters with underscores.
     """
 
-    def __init__(self, config_path: str = "src/agents/config", config_file_name: str = "trend_card_agent.yaml"):
+    def __init__(self, config_path: str = "src/agents/config",  config_file_name: str = "trend_card_agent.yaml",
+                 settings: AgentConfiguration = None):
         """
-        Initializes an instance of a class that configures and creates an agent based on the provided
-        configuration file. It loads configuration settings, stores prompt templates, and initializes
-        an agent with the specified model and parameters.
+        Initializes the configuration and sets up the agent with the provided or default parameters.
 
         Args:
-            config_path (str): Path to the configuration file. Defaults to "trend_card_agent.yaml".
+            config_path (str): Path to the directory containing the configuration files.
+            config_file_name (str): Name of the configuration file to be loaded.
+            settings (AgentConfiguration): Optional configuration settings to overwrite the
+                defaults in the configuration file.
+
         """
 
         # read config
-        self.config = load_config(config_file_name, config_path)
+        config = load_config(config_file_name, config_path)
 
-        # save prompt templates
-        self.system_prompt = self.config["system_prompt"]
-        self.prompt_template = self.config["generator_prompt"]
+        # overwrite the config file settings if settings are provided
+        if settings:
+            config["model"] = settings.model
+            config["temperature"] = settings.temperature
+
+        self.prompt_template = config["prompt_template"]
+        self.model = config["model"]
 
         # create the agent
-        # the Google API is different than those for OpenAI, Anthropic, etc., so need google-specific code
-        settings = None
-        model = None
-        if self.config["model"].startswith("gemini"):
-            settings = GoogleModelSettings(
-                temperature=self.config.get("temperature", 0.5),
-                max_tokens=self.config.get("max_tokens", 2048),
-                google_thinking_config={'thinking_budget': self.config.get("thinking_budget", 2048)},
-                google_safety_settings=[
-                    {
-                        'category': self.config.get("safety_settings_cateogry", HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT),
-                        'threshold': self.config.get("safety_settings_threshold", HarmBlockThreshold.BLOCK_LOW_AND_ABOVE),
-                    }
-                ]
-            )
-            model = GoogleModel(self.config["model"])
-        else:
-            settings=ModelSettings(
-                max_tokens=self.config.get("max_tokens", 2048),
-                temperature=self.config.get("temperature", 0.5)
-            )
-            model=self.config["model"]
-
-        self.agent = Agent(
-            model=model,
-            model_settings=settings,
-            output_type=TrendCard,
-            system_prompt=self.system_prompt,
-            retries=self.config.get("generator_retries", 3)
-        )
+        self.agent = AgentFactory.create_agent(config)
 
 
     async def generate_trend_card(self, inputs: TrendCardInput) -> TrendCard:
@@ -82,7 +63,7 @@ class TrendCardAgent:
 
         Args:
             inputs (TrendCardInput): Input object containing values for industry
-                segment, topic, and component.
+                segment, topic, component, and word limit.
 
         Returns:
             TrendCard: Generated trend card containing the requested components.
@@ -93,6 +74,7 @@ class TrendCardAgent:
             industry_segment=inputs.industry_segment,
             topic=inputs.topic,
             component=inputs.component,
+            word_limit=inputs.word_limit
         )
 
         # Run the agent
@@ -100,6 +82,47 @@ class TrendCardAgent:
         return result.output
 
 
+    async def generate_batch(self, industry_segment: str, topic_map: Dict[str, str],
+                             target_dir: str, word_limit: int = 40, verbose: bool = False) -> None:
+        """
+        Generates and processes a batch of trend cards for a given industry segment and saves them to a
+        specified directory.
+
+        This method iterates through a dictionary of topic-to-component mappings, creates trend cards for
+        each topic, and saves the generated trend card to a specified directory. Optional verbosity provides
+        detailed processing outputs for each trend card.
+
+        Args:
+            industry_segment: String identifier for the industry segment being processed.
+            topic_map: Dictionary mapping topics to their respective components.
+            target_dir: Directory to save the resulting trend cards.
+            word_limit: Word limit for each section of the trend card.
+            verbose: Boolean indicating whether to print detailed progress during processing. Defaults to False.
+
+        Returns:
+            None
+        """
+        list_len = len(topic_map)
+        if verbose: print(f'Processing {list_len} topic{"s" if list_len > 1 else ""}...')
+        i = 1
+        for topic, component in topic_map.items():
+            inputs = TrendCardInput(
+                industry_segment=industry_segment,
+                topic=topic,
+                component=component,
+                word_limit=word_limit
+            )
+
+            trend_card = await self.generate_trend_card(inputs)
+            trend_card.save_to_file(file_path=target_dir)
+
+            if verbose:
+                print(f"{i}: {trend_card.card_identifier}")
+                print("\nSECTION LENGTHS")
+                print(trend_card.get_length(), end="\n" * 2)
+                i += 1
+
+
     translation_table = str.maketrans('.:-', '___')
     def get_directory_safe_model_name(self) -> str:
-         return self.config["model"].translate(self.translation_table)
+         return self.model.translate(self.translation_table)
