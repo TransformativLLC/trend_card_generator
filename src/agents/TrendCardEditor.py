@@ -24,7 +24,7 @@ class TrendCardEditor:
 
     def __init__(self, config_path: str = "src/agents/config",
                  config_file_name: str = "trend_card_editor.yaml",
-                 section_word_limit: int = 30):
+                 section_word_limit: int = 40):
         """
         Initializes an instance of a class that configures and creates an agent based on the provided
         configuration file. It loads configuration settings, stores prompt templates, and initializes
