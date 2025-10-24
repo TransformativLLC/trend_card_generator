@@ -22,7 +22,9 @@ class TrendCardEditor:
         agent (Agent): Configured agent instance for generating trend cards.
     """
 
-    def __init__(self, config_path: str = "src/agents/config", config_file_name: str = "trend_card_editor.yaml"):
+    def __init__(self, config_path: str = "src/agents/config",
+                 config_file_name: str = "trend_card_editor.yaml",
+                 length_range: str = "150-160"):
         """
         Initializes an instance of a class that configures and creates an agent based on the provided
         configuration file. It loads configuration settings, stores prompt templates, and initializes
@@ -36,7 +38,10 @@ class TrendCardEditor:
         self.config = load_config(config_file_name, config_path)
 
         # save prompt templates
-        self.system_prompt = self.config["system_prompt"]
+        self.system_prompt = self.config["system_prompt"].format(length_range=length_range)
+
+        # save length range for reminder in editor prompt
+        self.length_range = length_range
 
         # create the agent
         # the Google API is different than those for OpenAI, Anthropic, etc., so need google-specific code
@@ -92,7 +97,10 @@ class TrendCardEditor:
         """
 
         # create the finished prompt
-        prompt = trend_card_text
+        reminder = (f"\n\nThe four sections (Description, Implications, Opportunities, Challenges) combined, when"
+                    f"re-written, should total {self.length_range} words. This length requirement is VERY IMPORTANT. "
+                    f"Please ensure it is not exceeded.")
+        prompt = trend_card_text + reminder
 
         # Run the agent
         result = await self.agent.run(prompt)

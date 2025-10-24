@@ -1,4 +1,4 @@
-model:  "claude-sonnet-4-5" # "gemini-2.5-pro" # "claude-sonnet-4-5"
+model: "openai:gpt-5-2025-08-07"  # "gemini-2.5-pro" # "claude-sonnet-4-5"
 temperature: 0.5
 max_tokens: 4096
 generator_retries: 3
@@ -33,7 +33,10 @@ system_prompt: |
   -- Edit the text in the Implications section as described in the ROLE definition above
   -- Edit the text in the Opportunities section as described in the ROLE definition above
   -- Edit the text in the Challenges section as described in the ROLE definition above
-  -- The four sections (Description, Implications, Opportunities, Challenges) combined should total 150-160 words.
+  
+  OUTPUT REQUIREMENTS
+  -- The four sections (Description, Implications, Opportunities, Challenges) combined, when re-written, should total {length_range} words. 
+     This length requirement is VERY IMPORTANT. Please ensure it is NOT EXCEEDED.
 
   EXAMPLE
   To give you a better idea of the type of edits that we are seeking, here is a "before" and "after" example.

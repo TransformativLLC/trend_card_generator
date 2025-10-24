@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import get_type_hints
+from typing import get_type_hints, Dict
 
 from src.utils.fileio import append_to_filename
 
@@ -79,10 +79,20 @@ class TrendCard(BaseModel):
 
         return card_content_markdown.strip()
 
-
     def save_to_file(self, file_name_suffix: str = None,
                      extension: str = ".md", file_path: str = "../outputs") -> str:
         """
+        Saves the content of the object to a file with a specified naming convention and file extension.
+        This method creates a new directory if it does not exist and writes the content in a format
+        determined by the extension. Only Markdown (.md) format is currently supported.
+
+        Args:
+            file_name_suffix (str, optional): The suffix to append to the file name. Defaults to None.
+            extension (str, optional): The desired file extension for the saved file. Defaults to ".md".
+            file_path (str, optional): The path where the file should be saved. Defaults to "../outputs".
+
+        Returns:
+            str: The name of the saved file.
         """
         # ensure the extension starts with a period
         if not extension.startswith('.'):
@@ -105,3 +115,26 @@ class TrendCard(BaseModel):
             case _: raise NotImplementedError(f"Extension '{extension}' not implemented.")
 
         return file_name
+
+    def get_length(self) -> Dict[str, int]:
+        """
+        Calculates the length of each attribute value of the TrendCard class in terms of the
+        number of words.
+
+        Iterates through the attributes of the TrendCard class, computes the total word count
+        for the value of each attribute, and returns this information as a dictionary.
+
+        Returns:
+            Dict[str, int]: A dictionary where keys are TrendCard attribute names and values
+            are the word counts of their respective content.
+
+        Raises:
+            AttributeError: If any attribute access operation fails.
+        """
+        section_lengths = dict()
+        # Iterate through TrendCard attributes
+        for attr_name in get_type_hints(TrendCard).keys():
+            content = getattr(self, attr_name)
+            section_lengths[attr_name] = len(content.split())
+
+        return section_lengths

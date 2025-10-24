@@ -5,7 +5,8 @@ from typing import List
 __all__ = [
     "get_file_list",
     "read_file",
-    "append_to_filename"
+    "append_to_filename",
+    "get_directory_safe_model_name"
 ]
 
 
@@ -108,3 +109,8 @@ def append_to_filename(file_path: str, suffix: str, separator: str = "_") -> str
 
     # Return the full path with new filename
     return str(path_obj.parent / new_filename)
+
+
+translation_table = str.maketrans('.:-', '___')
+def get_directory_safe_model_name(model_name: str) -> str:
+     return model_name.translate(translation_table)
