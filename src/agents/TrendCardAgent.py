@@ -99,3 +99,7 @@ class TrendCardAgent:
         result = await self.agent.run(prompt)
         return result.output
 
+
+    translation_table = str.maketrans('.:-', '___')
+    def get_directory_safe_model_name(self) -> str:
+         return self.config["model"].translate(self.translation_table)

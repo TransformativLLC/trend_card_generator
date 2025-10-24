@@ -1,10 +1,13 @@
+from typing import List
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
-from google.genai.types import HarmBlockThreshold, HarmCategory
 
-from src.models import TrendCard, TrendCardInput
+from google.genai.types import HarmBlockThreshold, HarmCategory, SafetySettingDict
+
+from src.models import TrendCard
 from src.utils.configuration import load_config
+from src.utils.fileio import read_file
 
 
 class TrendCardEditor:
@@ -18,7 +21,6 @@ class TrendCardEditor:
     Attributes:
         config (dict): The configuration dictionary loaded from the specified file.
         system_prompt (str): Predefined system prompt used by the agent.
-        prompt_template (str): Template for generating prompts specific to trend cards.
         agent (Agent): Configured agent instance for generating trend cards.
     """
 
@@ -45,19 +47,16 @@ class TrendCardEditor:
 
         # create the agent
         # the Google API is different than those for OpenAI, Anthropic, etc., so need google-specific code
-        settings = None
-        model = None
         if self.config["model"].startswith("gemini"):
+            safety_settings = SafetySettingDict(
+                category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+            )
             settings = GoogleModelSettings(
                 temperature=self.config.get("temperature", 0.5),
                 max_tokens=self.config.get("max_tokens", 2048),
                 google_thinking_config={'thinking_budget': self.config.get("thinking_budget", 2048)},
-                google_safety_settings=[
-                    {
-                        'category': self.config.get("safety_settings_cateogry", HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT),
-                        'threshold': self.config.get("safety_settings_threshold", HarmBlockThreshold.BLOCK_LOW_AND_ABOVE),
-                    }
-                ]
+                google_safety_settings=[safety_settings]
             )
             model = GoogleModel(self.config["model"])
         else:
@@ -109,3 +108,31 @@ class TrendCardEditor:
         # Run the agent
         result = await self.agent.run(trend_card_text)
         return result.output
+
+
+    async def edit_batch(self, file_list: List[str], target_dir: str,
+                         file_name_suffix: str, verbose: bool = False) -> None:
+        """
+        Asynchronously edits a batch of text files and saves the modified content to a target directory. Each file's content is
+        processed through the `edit_trend_card` method, and the resultant content is saved using the provided file name suffix.
+
+        Args:
+            file_list (List[str]): A list of file paths to be read and edited.
+            target_dir (str): The directory where the edited files will be saved.
+            file_name_suffix (str): A suffix appended to the file names of the edited files.
+            verbose (bool, optional): Enables verbose mode to log processing details if set to True. Defaults to False.
+
+        Returns:
+            None
+        """
+        if verbose: print(f'Editing {len(file_list)} files in "{target_dir}"...')
+        i = 1
+        for file in file_list:
+            text = read_file(file)
+            trend_card = await self.edit_trend_card(text)
+            saved_file_name = trend_card.save_to_file(file_path=target_dir, file_name_suffix=file_name_suffix)
+            if verbose:
+                print(f"{i}: {saved_file_name}")
+                print("\nWORD LENGTHS")
+                print(trend_card.get_length(), end="\n" * 2)
+                i += 1

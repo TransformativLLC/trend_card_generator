@@ -6,30 +6,29 @@ __all__ = [
     "get_file_list",
     "read_file",
     "append_to_filename",
-    "get_directory_safe_model_name"
 ]
 
 
-def get_file_list(path: str, extension: str) -> List[str]:
-    """Get a list of all files in the specified path with the given extension.
+def get_file_list(path: str, extension: str, exclude_names_with: str = None) -> List[str]:
+    """
+    Fetches a list of all files with a specified extension from a given directory recursively.
+
+    This function retrieves files from the provided directory whose file names
+    match the specified extension. It can optionally exclude files containing
+    a particular substring in their names.
 
     Args:
-        path: The directory path to search for files.
-        extension: The file extension to filter by (e.g., '.txt', 'txt').
-
-    Returns:
-        A list of file paths (as strings) that match the extension.
+        path: The path to the directory where files are searched.
+        extension: The file extension to match.
+        exclude_names_with: An optional string; files containing this substring
+            in their names will be excluded from the list.
 
     Raises:
         FileNotFoundError: If the specified path does not exist.
         NotADirectoryError: If the specified path is not a directory.
 
-    Examples:
-        >>> get_file_list('/path/to/dir', '.txt')
-        ['/path/to/dir/file1.txt', '/path/to/dir/file2.txt']
-
-        >>> get_file_list('/path/to/dir', 'py')
-        ['/path/to/dir/script.py']
+    Returns:
+        List[str]: A list of file paths that match the criteria.
     """
     path_obj = Path(path)
 
@@ -45,6 +44,10 @@ def get_file_list(path: str, extension: str) -> List[str]:
 
     # Get all files with the specified extension
     file_list = [str(file) for file in path_obj.rglob(f'*{extension}')]
+
+    # apply name filter if specified
+    if exclude_names_with:
+        file_list = [file for file in file_list if not exclude_names_with in file]
 
     return file_list
 
@@ -109,8 +112,3 @@ def append_to_filename(file_path: str, suffix: str, separator: str = "_") -> str
 
     # Return the full path with new filename
     return str(path_obj.parent / new_filename)
-
-
-translation_table = str.maketrans('.:-', '___')
-def get_directory_safe_model_name(model_name: str) -> str:
-     return model_name.translate(translation_table)
