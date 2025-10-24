@@ -6,9 +6,11 @@ from typing import get_type_hints, Dict
 from src.utils.fileio import append_to_filename
 
 
+# Word counting regex pattern that better matches MS Word's counting logic
+WORD_PATTERN = re.compile(r'\b[\w\']+\b')
+
+
 class TrendCard(BaseModel):
-    """
-    """
 
     card_identifier: str = Field(
         ...,
@@ -135,6 +137,6 @@ class TrendCard(BaseModel):
         # Iterate through TrendCard attributes
         for attr_name in get_type_hints(TrendCard).keys():
             content = getattr(self, attr_name)
-            section_lengths[attr_name] = len(content.split())
+            section_lengths[attr_name] = len(WORD_PATTERN.findall(content))
 
         return section_lengths
